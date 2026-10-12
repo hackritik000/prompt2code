@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Campus Lost &amp; Found Matcher</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <h1>Lost &amp; Found<span>Campus matcher</span></h1>
+    <nav id="tabs" aria-label="Sections">
+      <button data-t="report" class="on">Report</button>
+      <button data-t="lost">Lost items</button>
+      <button data-t="found">Found items</button>
+      <button data-t="matches">Matches</button>
+      <button data-t="items">All items</button>
+    </nav>
+    <button class="soft" id="setBtn">AI settings</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="report" class="tab">
+    <h2>Report an item</h2>
+    <p class="lead">Tell us what was lost or found. Matches appear as soon as you save.</p>
+    <form id="form">
+      <div class="seg" role="radiogroup" aria-label="Report type">
+        <label><input type="radio" name="type" value="lost" checked><span>I lost something</span></label>
+        <label><input type="radio" name="type" value="found"><span>I found something</span></label>
+      </div>
+      <div class="grid">
+        <label>Category<select name="category" required></select></label>
+        <label>Color<select name="color" required></select></label>
+        <label>Where<select name="location" required></select></label>
+        <label>Date<input type="date" name="date" required></label>
+      </div>
+      <label>Description
+        <textarea name="description" rows="3" placeholder="Brand, size, stickers, scratches, anything distinctive"></textarea>
+      </label>
+      <div class="row">
+        <button class="cta" type="submit">Save report</button>
+        <button class="soft" type="button" id="demo">Load demo data</button>
+      </div>
+    </form>
+  </section>
+  <section id="lost" class="tab" hidden></section>
+  <section id="found" class="tab" hidden></section>
+  <section id="matches" class="tab" hidden></section>
+  <section id="items" class="tab" hidden></section>
+</main>
+
+<footer><div class="wrap" id="weights"></div></footer>
+
+<dialog id="dlg">
+  <form method="dialog">
+    <h2>AI settings</h2>
+    <p class="lead">Optional. Matching works fully without it. Your key stays in this browser.</p>
+    <label>Provider
+      <select id="prov"><option value="gemini">Google Gemini</option><option value="openai">OpenAI-compatible</option></select>
+    </label>
+    <label>API key<input id="key" type="password" autocomplete="off"></label>
+    <label>Model<input id="model"></label>
+    <label id="baseRow" hidden>Base URL<input id="base" placeholder="https://api.openai.com/v1"></label>
+    <div class="row">
+      <button class="cta" id="saveCfg" value="ok">Save</button>
+      <button class="soft" value="x">Cancel</button>
+      <button class="soft" id="clrCfg" type="button">Remove key</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="detail">
+  <div id="dBody"></div>
+  <form method="dialog"><button class="soft">Close</button></form>
+</dialog>
+<div id="toast" role="status"></div>
+
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
