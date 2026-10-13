@@ -41,8 +41,13 @@ export async function compareWithAI(
     '{"score": number 0-100 (chance they are the same item), "reason": "one short sentence"}.\n' +
     `LOST: ${formatItem(lost)}\nFOUND: ${formatItem(found)}`;
 
+  const effectiveModel =
+    config.model && config.model !== 'gemini-3.5-flash'
+      ? config.model
+      : 'gemini-1.5-flash';
+
   const url = isGemini
-    ? `https://generativelanguage.googleapis.com/v1beta/models/${config.model || 'gemini-3.5-flash'}:generateContent`
+    ? `https://generativelanguage.googleapis.com/v1beta/models/${effectiveModel}:generateContent`
     : `${(config.base || 'https://api.openai.com/v1').replace(/\/$/, '')}/chat/completions`;
 
   const requestOptions: RequestInit = {
@@ -79,9 +84,27 @@ export async function compareWithAI(
       throw createError('Network error', { kind: 'net' });
     }
 
+    if (response.ok) {
+      break;
+    }
+
+    // Inspect error body if request failed
+    let errorDetail = '';
+    try {
+      const errClone = await response.clone().json();
+      errorDetail = errClone?.error?.message || '';
+    } catch {
+      // ignore JSON parse failure
+    }
+
+    // Hard quota exhaustion (daily free tier cap) cannot be solved by retrying immediately
+    if (response.status === 429 && errorDetail.toLowerCase().includes('quota')) {
+      throw createError(errorDetail, { status: 429, kind: 'quota' });
+    }
+
     const isTransientError = [429, 500, 502, 503, 504].includes(response.status);
 
-    if (response.ok || !isTransientError || attempt === maxAttempts) {
+    if (!isTransientError || attempt === maxAttempts) {
       break;
     }
 
@@ -92,7 +115,23 @@ export async function compareWithAI(
   }
 
   if (!response || !response.ok) {
-    throw createError(`HTTP ${response?.status}`, { status: response?.status });
+    let errorDetail = '';
+    if (response) {
+      try {
+        const errJson = await response.json();
+        errorDetail = errJson?.error?.message || '';
+      } catch {
+        // ignore
+      }
+    }
+
+    if (response?.status === 429 && errorDetail.toLowerCase().includes('quota')) {
+      throw createError(errorDetail, { status: 429, kind: 'quota' });
+    }
+
+    throw createError(errorDetail || `HTTP ${response?.status ?? 'error'}`, {
+      status: response?.status,
+    });
   }
 
   try {
@@ -120,7 +159,14 @@ export function getAiErrorMessage(err: unknown): string {
   const status = aiErr?.status;
   let reason = 'The AI replied in an unexpected format. Please try again.';
 
-  if (status && (status >= 500 || status === 429)) {
+  if (
+    aiErr?.kind === 'quota' ||
+    (typeof aiErr?.message === 'string' &&
+      aiErr.message.toLowerCase().includes('quota'))
+  ) {
+    reason =
+      'Free tier quota reached for this model. Switch model to "gemini-1.5-flash" (1,500 free req/day) in AI settings, or enable billing.';
+  } else if (status && (status >= 500 || status === 429)) {
     reason = 'The AI service is busy right now. Press Ask AI again in a moment.';
   } else if (status === 404) {
     reason = 'The model name was not found. Check the model name in AI settings.';

@@ -34,7 +34,7 @@ npm run preview
 The project is written in strict TypeScript with full type safety across components, models, and calculation engines:
 
 ```
-compuse/
+campus/
 ├── src/
 │   ├── types/                 # Centralized TypeScript definitions
 │   │   └── index.ts           # Item, MatchComparison, AiConfig, TabId types

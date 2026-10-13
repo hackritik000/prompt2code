@@ -24,6 +24,15 @@ body {
     Roboto,
     sans-serif;
 }
+#root{
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+main{
+  padding-bottom: 56px;
+
+}
 .wrap {
   max-width: 860px;
   margin: 0 auto;
@@ -266,6 +275,7 @@ textarea:focus {
   background: var(--peach);
   border-radius: 10px;
   padding: 8px 12px;
+  max-width:400px;
   margin-top: 10px;
 }
 
@@ -296,7 +306,7 @@ textarea:focus {
 footer {
   background: var(--ink);
   color: var(--cream);
-  margin-top: 56px;
+  margin-top: auto;
   padding: 18px 0;
   font-size: 0.85rem;
 }
@@ -320,7 +330,7 @@ dialog h2 {
 #toast {
   position: fixed;
   left: 50%;
-  bottom: 24px;
+  bottom: 70px;
   transform: translate(-50%, 16px);
   background: var(--ink);
   color: var(--cream);

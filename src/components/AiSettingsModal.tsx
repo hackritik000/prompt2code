@@ -110,10 +110,15 @@ export default function AiSettingsModal({
           Model
           <input
             id="model"
-            placeholder={isGemini ? 'gemini-3.5-flash' : 'model name'}
+            placeholder={isGemini ? 'gemini-1.5-flash' : 'model name'}
             value={model}
             onChange={(e) => setModel(e.target.value)}
           />
+          {isGemini && (
+            <small style={{ display: 'block', marginTop: '0.25rem', opacity: 0.8 }}>
+              Recommended: <code>gemini-1.5-flash</code> (1,500 req/day free).
+            </small>
+          )}
         </label>
 
         {!isGemini && (

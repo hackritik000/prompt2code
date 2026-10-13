@@ -16,7 +16,7 @@ export default function App(): React.JSX.Element {
   const [items, setItems] = useLocalStorage<Item[]>('lf-items', []);
   const [config, setConfig] = useLocalStorage<AiConfig>('lf-ai', {
     provider: 'gemini',
-    model: 'gemini-3.5-flash',
+    model: 'gemini-1.5-flash',
   });
 
   // UI state

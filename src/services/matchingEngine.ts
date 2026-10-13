@@ -14,20 +14,20 @@
  */
 
 import {
-  ZONES,
-  COLOR_FAMILIES,
-  SYNONYMS,
-  STOP_WORDS,
-} from '../constants/options';
-import { WEIGHTS } from '../constants/weights';
-import { getDayNumber } from '../utils/dateUtils';
-import {
-  Item,
-  SimilarityParts,
-  SimilarityPartKey,
-  MatchComparison,
-  MatchCandidate,
-} from '../types';
+	COLOR_FAMILIES,
+	STOP_WORDS,
+	SYNONYMS,
+	ZONES,
+} from "../constants/options";
+import { WEIGHTS } from "../constants/weights";
+import type {
+	Item,
+	MatchCandidate,
+	MatchComparison,
+	SimilarityPartKey,
+	SimilarityParts,
+} from "../types";
+import { getDayNumber } from "../utils/dateUtils";
 
 /**
  * Computes Levenshtein edit distance between two strings.
@@ -37,29 +37,29 @@ import {
  * @param b - Second string
  * @returns Minimum single-character edits (insertions, deletions, substitutions)
  */
-export function levenshtein(a: string, b: string): number {
-  const dp: number[] = [...Array(b.length + 1).keys()];
-  for (let i = 1; i <= a.length; i++) {
-    let prev = dp[0];
-    dp[0] = i;
-    for (let j = 1; j <= b.length; j++) {
-      const temp = dp[j];
-      dp[j] = Math.min(
-        dp[j] + 1,
-        dp[j - 1] + 1,
-        prev + (a[i - 1] === b[j - 1] ? 0 : 1)
-      );
-      prev = temp;
-    }
-  }
-  return dp[b.length];
+function levenshtein(a: string, b: string): number {
+	const dp: number[] = [...Array(b.length + 1).keys()];
+	for (let i = 1; i <= a.length; i++) {
+		let prev = dp[0];
+		dp[0] = i;
+		for (let j = 1; j <= b.length; j++) {
+			const temp = dp[j];
+			dp[j] = Math.min(
+				dp[j] + 1,
+				dp[j - 1] + 1,
+				prev + (a[i - 1] === b[j - 1] ? 0 : 1),
+			);
+			prev = temp;
+		}
+	}
+	return dp[b.length];
 }
 
 /**
  * Checks if two words are identical or within a 1-character typo tolerance.
  */
-export function isSimilarWord(a: string, b: string): boolean {
-  return a === b || (a.length > 3 && b.length > 3 && levenshtein(a, b) <= 1);
+function isSimilarWord(a: string, b: string): boolean {
+	return a === b || (a.length > 3 && b.length > 3 && levenshtein(a, b) <= 1);
 }
 
 /**
@@ -67,37 +67,37 @@ export function isSimilarWord(a: string, b: string): boolean {
  * filtering common English stop words, and mapping synonyms to canonical terms.
  */
 export function tokenize(text: string): string[] {
-  return (text || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, ' ')
-    .split(/\s+/)
-    .filter((word) => word && !STOP_WORDS.has(word))
-    .map((word) => SYNONYMS[word] || word);
+	return (text || "")
+		.toLowerCase()
+		.replace(/[^a-z0-9 ]/g, " ")
+		.split(/\s+/)
+		.filter((word) => word && !STOP_WORDS.has(word))
+		.map((word) => SYNONYMS[word] || word);
 }
 
 /**
  * Calculates text similarity using the Sørensen-Dice coefficient with typo tolerance.
  * Returns null when either description is empty, which excludes the factor from the weighted average.
  */
-export function descSim(a: string, b: string): number | null {
-  const tokensA = tokenize(a);
-  const tokensB = tokenize(b);
-  if (!tokensA.length || !tokensB.length) return null;
+function descSim(a: string, b: string): number | null {
+	const tokensA = tokenize(a);
+	const tokensB = tokenize(b);
+	if (!tokensA.length || !tokensB.length) return null;
 
-  const used = new Set<number>();
-  let matches = 0;
+	const used = new Set<number>();
+	let matches = 0;
 
-  for (const wordA of tokensA) {
-    const matchIndex = tokensB.findIndex(
-      (wordB, index) => !used.has(index) && isSimilarWord(wordA, wordB)
-    );
-    if (matchIndex > -1) {
-      used.add(matchIndex);
-      matches++;
-    }
-  }
+	for (const wordA of tokensA) {
+		const matchIndex = tokensB.findIndex(
+			(wordB, index) => !used.has(index) && isSimilarWord(wordA, wordB),
+		);
+		if (matchIndex > -1) {
+			used.add(matchIndex);
+			matches++;
+		}
+	}
 
-  return (2 * matches) / (tokensA.length + tokensB.length);
+	return (2 * matches) / (tokensA.length + tokensB.length);
 }
 
 /**
@@ -106,10 +106,10 @@ export function descSim(a: string, b: string): number | null {
  * - Either is "Other": 0.4 (partial credit for unclassified items)
  * - Different categories: 0.0
  */
-export function catSim(a: string, b: string): number {
-  if (a === b) return 1.0;
-  if (a === 'Other' || b === 'Other') return 0.4;
-  return 0.0;
+function catSim(a: string, b: string): number {
+	if (a === b) return 1.0;
+	if (a === "Other" || b === "Other") return 0.4;
+	return 0.0;
 }
 
 /**
@@ -120,12 +120,12 @@ export function catSim(a: string, b: string): number {
  * - Unrelated colors: 0.0
  */
 export function colSim(a: string, b: string): number {
-  if (a === b) return 1.0;
-  if (a === 'multicolor' || b === 'multicolor') return 0.5;
-  const isSameFamily = COLOR_FAMILIES.some(
-    (family) => family.includes(a) && family.includes(b)
-  );
-  return isSameFamily ? 0.5 : 0.0;
+	if (a === b) return 1.0;
+	if (a === "multicolor" || b === "multicolor") return 0.5;
+	const isSameFamily = COLOR_FAMILIES.some(
+		(family) => family.includes(a) && family.includes(b),
+	);
+	return isSameFamily ? 0.5 : 0.0;
 }
 
 /**
@@ -135,9 +135,9 @@ export function colSim(a: string, b: string): number {
  * - Different zones: 0.0
  */
 export function locSim(a: string, b: string): number {
-  if (a === b) return 1.0;
-  if (ZONES[a] && ZONES[a] === ZONES[b]) return 0.6;
-  return 0.0;
+	if (a === b) return 1.0;
+	if (ZONES[a] && ZONES[a] === ZONES[b]) return 0.6;
+	return 0.0;
 }
 
 /**
@@ -146,14 +146,14 @@ export function locSim(a: string, b: string): number {
  * Items found up to 7 days after linearly decay from 1.0 to 0.0.
  */
 export function dateSim(lostDate: string, foundDate: string): number {
-  const diffDays = getDayNumber(foundDate) - getDayNumber(lostDate);
-  if (diffDays < 0) return 0.0;
-  return Math.max(0, 1 - diffDays / 7);
+	const diffDays = getDayNumber(foundDate) - getDayNumber(lostDate);
+	if (diffDays < 0) return 0.0;
+	return Math.max(0, 1 - diffDays / 7);
 }
 
 export type ItemComparisonInput = Pick<
-  Item,
-  'category' | 'color' | 'location' | 'date' | 'description'
+	Item,
+	"category" | "color" | "location" | "date" | "description"
 >;
 
 /**
@@ -162,74 +162,76 @@ export type ItemComparisonInput = Pick<
  * (max 40%) if the item categories do not match at all.
  */
 export function compare(
-  lost: ItemComparisonInput,
-  found: ItemComparisonInput
+	lost: ItemComparisonInput,
+	found: ItemComparisonInput,
 ): MatchComparison {
-  const parts: SimilarityParts = {
-    category: catSim(lost.category, found.category),
-    color: colSim(lost.color, found.color),
-    location: locSim(lost.location, found.location),
-    date: dateSim(lost.date, found.date),
-    description: descSim(lost.description, found.description),
-  };
+	const parts: SimilarityParts = {
+		category: catSim(lost.category, found.category),
+		color: colSim(lost.color, found.color),
+		location: locSim(lost.location, found.location),
+		date: dateSim(lost.date, found.date),
+		description: descSim(lost.description, found.description),
+	};
 
-  let weightedSum = 0;
-  let totalApplicableWeight = 0;
+	let weightedSum = 0;
+	let totalApplicableWeight = 0;
 
-  const keys = Object.keys(WEIGHTS) as SimilarityPartKey[];
-  for (const key of keys) {
-    const val = parts[key];
-    // If description is missing/null, dynamically redistribute weights
-    if (val === null) continue;
-    weightedSum += WEIGHTS[key] * val;
-    totalApplicableWeight += WEIGHTS[key];
-  }
+	const keys = Object.keys(WEIGHTS) as SimilarityPartKey[];
+	for (const key of keys) {
+		const val = parts[key];
+		// If description is missing/null, dynamically redistribute weights
+		if (val === null) continue;
+		weightedSum += WEIGHTS[key] * val;
+		totalApplicableWeight += WEIGHTS[key];
+	}
 
-  let pct =
-    totalApplicableWeight > 0
-      ? Math.round((100 * weightedSum) / totalApplicableWeight)
-      : 0;
+	let pct =
+		totalApplicableWeight > 0
+			? Math.round((100 * weightedSum) / totalApplicableWeight)
+			: 0;
 
-  // Domain rule: If items are entirely different categories, match cannot exceed 40%
-  if (parts.category === 0) {
-    pct = Math.min(pct, 40);
-  }
+	// Domain rule: If items are entirely different categories, match cannot exceed 40%
+	if (parts.category === 0) {
+		pct = Math.min(pct, 40);
+	}
 
-  return { pct, parts };
+	return { pct, parts };
 }
 
 /**
  * Finds and ranks candidates for a given target item among all items in storage.
  */
 export function matchesFor(
-  targetItem: Item,
-  allItems: Item[],
-  minThreshold: number = 45
+	targetItem: Item,
+	allItems: Item[],
+	minThreshold: number = 45,
 ): MatchCandidate[] {
-  return allItems
-    .filter((other) => other.type !== targetItem.type && other.status === 'open')
-    .map((other): MatchCandidate => {
-      const matchDetails =
-        targetItem.type === 'lost'
-          ? compare(targetItem, other)
-          : compare(other, targetItem);
+	return allItems
+		.filter(
+			(other) => other.type !== targetItem.type && other.status === "open",
+		)
+		.map((other): MatchCandidate => {
+			const matchDetails =
+				targetItem.type === "lost"
+					? compare(targetItem, other)
+					: compare(other, targetItem);
 
-      return {
-        item: other,
-        ...matchDetails,
-      };
-    })
-    .filter((candidate) => candidate.pct >= minThreshold)
-    .sort((a, b) => b.pct - a.pct);
+			return {
+				item: other,
+				...matchDetails,
+			};
+		})
+		.filter((candidate) => candidate.pct >= minThreshold)
+		.sort((a, b) => b.pct - a.pct);
 }
 
 export const Engine = {
-  W: WEIGHTS,
-  ZONES,
-  tok: tokenize,
-  descSim,
-  compare,
-  matchesFor,
+	W: WEIGHTS,
+	ZONES,
+	tok: tokenize,
+	descSim,
+	compare,
+	matchesFor,
 };
 
 export default Engine;
