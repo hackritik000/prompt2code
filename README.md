@@ -66,7 +66,6 @@ campus/
 │   ├── vite-env.d.ts          # Vite client types
 │   └── main.tsx               # React 18 root mount
 ├── tsconfig.json              # TypeScript compiler configuration
-├── vanilla_backup/            # Safe backup of the original vanilla files
 ├── vite.config.js             # Vite configuration
 ├── package.json               # Dependencies & scripts
 └── README.md                  # Project documentation & defense guide
